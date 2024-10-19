@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.db.models import F, Count
 from rest_framework import mixins
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from airport.models import (
@@ -45,6 +46,11 @@ class AirportViewSet(
 def _params_to_ints(qs):
     """Converts a list of string IDs to a list of integers"""
     return [int(str_id) for str_id in qs.split(",")]
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 5
+    max_page_size = 100
 
 
 class RouteViewSet(
@@ -127,6 +133,7 @@ class FlightViewSet(
             )
         )
     )
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         departure_date = self.request.query_params.get("date")
@@ -170,6 +177,7 @@ class OrderViewSet(
             "tickets__flight__crew"
         )
     )
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
