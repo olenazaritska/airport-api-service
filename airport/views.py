@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import F, Count
 from rest_framework import mixins
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
@@ -40,6 +42,11 @@ class AirportViewSet(
     serializer_class = AirportSerializer
 
 
+def _params_to_ints(qs):
+    """Converts a list of string IDs to a list of integers"""
+    return [int(str_id) for str_id in qs.split(",")]
+
+
 class RouteViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -47,6 +54,22 @@ class RouteViewSet(
     GenericViewSet
 ):
     queryset = Route.objects.select_related("source", "destination")
+
+    def get_queryset(self):
+        source = self.request.query_params.get("source")
+        destination = self.request.query_params.get("destination")
+
+        queryset = self.queryset
+
+        if source:
+            source_ids = self._params_to_ints(source)
+            queryset = queryset.filter(source__id__in=source_ids)
+
+        if destination:
+            destination_ids = self._params_to_ints(destination)
+            queryset = queryset.filter(destination__id__in=destination_ids)
+
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -104,6 +127,26 @@ class FlightViewSet(
             )
         )
     )
+
+    def get_queryset(self):
+        departure_date = self.request.query_params.get("date")
+        source = self.request.query_params.get("source")
+        destination = self.request.query_params.get("destination")
+
+        queryset = self.queryset
+
+        if departure_date:
+            queryset = queryset.filter(departure_time__date=departure_date)
+
+        if source:
+            source_ids = _params_to_ints(source)
+            queryset = queryset.filter(route__source__id__in=source_ids)
+
+        if destination:
+            destination_ids = _params_to_ints(destination)
+            queryset = queryset.filter(route__destination__id__in=destination_ids)
+
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
