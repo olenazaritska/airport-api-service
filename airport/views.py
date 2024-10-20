@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from django.db.models import F, Count
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from airport.models import (
@@ -14,6 +13,7 @@ from airport.models import (
     Flight,
     Order
 )
+from airport.permissions import IsAdminOrIfAuthenticatedReadOnly
 from airport.serializers import (
     AirportSerializer,
     RouteSerializer,
@@ -29,7 +29,7 @@ from airport.serializers import (
     FlightDetailSerializer,
     OrderSerializer,
     OrderListSerializer,
-    OrderDetailSerializer,
+    OrderDetailSerializer, CrewListSerializer,
 )
 
 
@@ -41,6 +41,7 @@ class AirportViewSet(
 ):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
 def _params_to_ints(qs):
@@ -60,6 +61,7 @@ class RouteViewSet(
     GenericViewSet
 ):
     queryset = Route.objects.select_related("source", "destination")
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         source = self.request.query_params.get("source")
@@ -87,7 +89,12 @@ class RouteViewSet(
 
 class CrewViewSet(ModelViewSet):
     queryset = Crew.objects.all()
-    serializer_class = CrewSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CrewListSerializer
+        return CrewSerializer
 
 
 class AirplaneTypeViewSet(
@@ -98,6 +105,7 @@ class AirplaneTypeViewSet(
 ):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
 class AirplaneViewSet(
@@ -107,6 +115,7 @@ class AirplaneViewSet(
     GenericViewSet
 ):
     queryset = Airplane.objects.select_related("airplane_type")
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -134,6 +143,7 @@ class FlightViewSet(
         )
     )
     pagination_class = StandardResultsSetPagination
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         departure_date = self.request.query_params.get("date")
@@ -178,6 +188,7 @@ class OrderViewSet(
         )
     )
     pagination_class = StandardResultsSetPagination
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
