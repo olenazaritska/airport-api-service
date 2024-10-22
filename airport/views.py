@@ -29,7 +29,8 @@ from airport.serializers import (
     FlightDetailSerializer,
     OrderSerializer,
     OrderListSerializer,
-    OrderDetailSerializer, CrewListSerializer,
+    OrderDetailSerializer,
+    CrewListSerializer,
 )
 
 
@@ -70,11 +71,11 @@ class RouteViewSet(
         queryset = self.queryset
 
         if source:
-            source_ids = self._params_to_ints(source)
+            source_ids = _params_to_ints(source)
             queryset = queryset.filter(source__id__in=source_ids)
 
         if destination:
-            destination_ids = self._params_to_ints(destination)
+            destination_ids = _params_to_ints(destination)
             queryset = queryset.filter(destination__id__in=destination_ids)
 
         return queryset.distinct()
