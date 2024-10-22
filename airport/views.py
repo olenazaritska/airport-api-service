@@ -136,6 +136,7 @@ class FlightViewSet(
         Flight.objects
         .select_related("route", "airplane")
         .prefetch_related("crew")
+        .order_by("departure_time", "arrival_time")
         .annotate(
             tickets_available=(
                     F("airplane__rows") * F("airplane__seats_in_row")
