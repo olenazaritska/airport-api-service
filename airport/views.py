@@ -1,4 +1,5 @@
 from django.db.models import F, Count
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -87,6 +88,25 @@ class RouteViewSet(
             return RouteDetailSerializer
         return RouteSerializer
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="source",
+                description="Filter by departure airport id",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="destination",
+                description="Filter by destination airport id",
+                required=False,
+                type=str
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(self, request, *args, **kwargs)
+
 
 class CrewViewSet(ModelViewSet):
     queryset = Crew.objects.all()
@@ -173,6 +193,31 @@ class FlightViewSet(
         elif self.action == "retrieve":
             return FlightDetailSerializer
         return FlightSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="date",
+                description="Filter by departure date, ex. 2024-01-01",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="source",
+                description="Filter by departure airport id",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="destination",
+                description="Filter by destination airport id",
+                required=False,
+                type=str
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(self, request, *args, **kwargs)
 
 
 class OrderViewSet(
