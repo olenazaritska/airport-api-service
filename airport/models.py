@@ -28,7 +28,7 @@ class Route(models.Model):
         ]
 
     @property
-    def full_route(self):
+    def full_route(self) -> str:
         return f"{self.source.name} - {self.destination.name}"
 
     @staticmethod
@@ -52,7 +52,7 @@ class Crew(models.Model):
     last_name = models.CharField(max_length=255)
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
     class Meta:
