@@ -159,8 +159,8 @@ class FlightViewSet(
         .order_by("departure_time", "arrival_time")
         .annotate(
             tickets_available=(
-                    F("airplane__rows") * F("airplane__seats_in_row")
-                    - Count("tickets")
+                F("airplane__rows") * F("airplane__seats_in_row")
+                - Count("tickets")
             )
         )
     )
@@ -183,7 +183,9 @@ class FlightViewSet(
 
         if destination:
             destination_ids = _params_to_ints(destination)
-            queryset = queryset.filter(route__destination__id__in=destination_ids)
+            queryset = queryset.filter(
+                route__destination__id__in=destination_ids
+            )
 
         return queryset.distinct()
 

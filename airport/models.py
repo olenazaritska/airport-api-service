@@ -18,13 +18,24 @@ class Airport(models.Model):
 
 
 class Route(models.Model):
-    source = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="source_routes")
-    destination = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="destination_routes")
+    source = models.ForeignKey(
+        Airport,
+        on_delete=models.CASCADE,
+        related_name="source_routes"
+    )
+    destination = models.ForeignKey(
+        Airport,
+        on_delete=models.CASCADE,
+        related_name="destination_routes"
+    )
     distance = models.IntegerField()
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["source", "destination"], name="unique_route")
+            models.UniqueConstraint(
+                fields=["source", "destination"],
+                name="unique_route"
+            )
         ]
 
     @property
@@ -34,7 +45,9 @@ class Route(models.Model):
     @staticmethod
     def validate_route(source, destination, error_to_raise):
         if source == destination:
-            raise error_to_raise("Source and destination airports must be different.")
+            raise error_to_raise(
+                "Source and destination airports must be different."
+            )
 
     def clean(self):
         Route.validate_route(self.source, self.destination, ValidationError)
@@ -94,8 +107,16 @@ class Airplane(models.Model):
 
 
 class Flight(models.Model):
-    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name="flights")
-    airplane = models.ForeignKey(Airplane, on_delete=models.CASCADE, related_name="flights")
+    route = models.ForeignKey(
+        Route,
+        on_delete=models.CASCADE,
+        related_name="flights"
+    )
+    airplane = models.ForeignKey(
+        Airplane,
+        on_delete=models.CASCADE,
+        related_name="flights"
+    )
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField(Crew, related_name="flights")
@@ -117,30 +138,43 @@ class Flight(models.Model):
             error_to_raise
     ):
         if departure_time >= arrival_time:
-            raise error_to_raise("Departure time must be earlier than arrival time.")
+            raise error_to_raise(
+                "Departure time must be earlier than arrival time."
+            )
 
         if previous_arrival_time:
             if departure_time < previous_arrival_time:
-                next_possible_departure = previous_arrival_time + timedelta(hours=3)
+                next_possible_departure = (
+                    previous_arrival_time + timedelta(hours=3)
+                )
                 raise error_to_raise(
-                    f"Cannot schedule this flight before the previous flight arrives. "
-                    f"The airplane's last scheduled flight arrives at {previous_arrival_time}. "
-                    f"The next possible departure time is {next_possible_departure}."
+                    f"Cannot schedule this flight "
+                    f"before the previous flight arrives. "
+                    f"The airplane's last scheduled flight "
+                    f"arrives at {previous_arrival_time}. "
+                    f"The next possible departure time is "
+                    f"{next_possible_departure}."
                 )
             if departure_time < previous_arrival_time + timedelta(hours=3):
-                next_possible_departure = previous_arrival_time + timedelta(hours=3)
+                next_possible_departure = (
+                    previous_arrival_time + timedelta(hours=3)
+                )
                 raise error_to_raise(
-                    f"The airplane needs a 3-hour rest after its previous flight. "
+                    f"The airplane needs a 3-hour rest "
+                    f"after its previous flight. "
                     f"The previous flight arrived at {previous_arrival_time}. "
-                    f"The next available departure time is {next_possible_departure}."
+                    f"The next available departure time is "
+                    f"{next_possible_departure}."
                 )
 
             time_difference = departure_time - previous_arrival_time
             if time_difference > timedelta(hours=24):
                 raise error_to_raise(
-                    f"The time difference between consecutive flights shouldn't exceed 24 hours. "
+                    f"The time difference between consecutive flights "
+                    f"shouldn't exceed 24 hours. "
                     f"Previous flight arrived at {previous_arrival_time}, "
-                    f"and this flight is scheduled to depart at {departure_time}."
+                    f"and this flight is scheduled to depart "
+                    f"at {departure_time}."
                 )
 
     @staticmethod
@@ -153,14 +187,18 @@ class Flight(models.Model):
         if source != previous_destination:
             if available_route_list:
                 raise error_to_raise(
-                    "Departure location should match the arrival location of the previous flight. "
-                    f"Available routes with the correct departure location: {available_route_list}."
+                    "Departure location should match the arrival location "
+                    "of the previous flight. "
+                    f"Available routes with the correct departure location: "
+                    f"{available_route_list}."
                 )
             else:
                 raise error_to_raise(
-                    "Departure location should match the arrival location of the previous flight. "
+                    "Departure location should match the arrival location "
+                    "of the previous flight. "
                     "There are no routes with the correct departure location. "
-                    "You need to create a route first, then schedule the flight."
+                    "You need to create a route first, "
+                    "then schedule the flight."
                 )
 
     def clean(self):
@@ -169,7 +207,7 @@ class Flight(models.Model):
         previous_flight = (
             Flight.objects
             .filter(airplane=self.airplane)
-            .order_by('-arrival_time')
+            .order_by("-arrival_time")
             .first()
         )
         previous_arrival_time = None
@@ -177,10 +215,15 @@ class Flight(models.Model):
         if previous_flight:
             previous_arrival_time = previous_flight.arrival_time
 
-            available_routes = Route.objects.filter(source=previous_flight.route.destination)
+            available_routes = (
+                Route.objects
+                .filter(source=previous_flight.route.destination)
+            )
             available_route_list = None
             if available_routes:
-                available_route_list = ", ".join([route.full_route for route in available_routes])
+                available_route_list = ", ".join(
+                    [route.full_route for route in available_routes]
+                )
 
             Flight.validate_flight_departure_location(
                 self.route.source,
@@ -226,12 +269,23 @@ class Order(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    flight = models.ForeignKey(Flight, on_delete=models.CASCADE, related_name="tickets")
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tickets")
+    flight = models.ForeignKey(
+        Flight,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["flight", "row", "seat"], name="unique_ticket")
+            models.UniqueConstraint(
+                fields=["flight", "row", "seat"],
+                name="unique_ticket"
+            )
         ]
         ordering = ["row", "seat"]
 
@@ -245,10 +299,11 @@ class Ticket(models.Model):
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                                          f"number must be in available range: "
-                                          f"(1, {airplane_attr_name}): "
-                                          f"(1, {count_attrs})"
+                        ticket_attr_name:
+                            f"{ticket_attr_name} "
+                            f"number must be in available range: "
+                            f"(1, {airplane_attr_name}): "
+                            f"(1, {count_attrs})"
                     }
                 )
 
@@ -260,9 +315,12 @@ class Ticket(models.Model):
     ):
         if order_created_at > flight_departure_time:
             raise error_to_raise(
-                {"order": "Booking for past flights is not available. "
-                          f"Order created at {order_created_at} "
-                          f"but the flight departs at {flight_departure_time}."}
+                {
+                    "order": "Booking for past flights is not available. "
+                             f"Order created at {order_created_at} "
+                             f"but the flight departs at "
+                             f"{flight_departure_time}."
+                }
             )
 
     def clean(self):
